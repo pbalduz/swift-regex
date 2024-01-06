@@ -145,4 +145,55 @@ final class ListTests: XCTestCase {
         // then
         XCTAssertEqual(output, "3, 4")
     }
+
+    func testDigitListWithSeparator() {
+        // given
+        let data = "1, 2, 3, 4"
+        let regex = List(separator: ", ")
+
+        // when
+        let output = data
+            .wholeMatch(of: regex)
+            .map(\.output)
+
+        // then
+        XCTAssertEqual(output, (1...4).map(String.init))
+    }
+
+    func testDigitListWithSeparatorAndLookahead() {
+        // given
+        let data = "1, 2, 3, 4 - 5, 6, 7, 8"
+        let regex = List(
+            separator: ", ",
+            lookahead: " - "
+        )
+
+        // when
+        let output = data
+            .firstMatch(of: regex)
+            .map(\.output)
+
+        // then
+        XCTAssertEqual(output, (1...4).map(String.init))
+    }
+
+    func testDigitListLookaheadRemainder() {
+        // given
+        let data = "1, 2, 3, 4 - 5, 6, 7, 8"
+        let regex = Regex {
+            List(
+                separator: ", ",
+                lookahead: " - "
+            )
+            Capture(OneOrMore(.any))
+        }
+
+        // when
+        let output = data
+            .wholeMatch(of: regex)
+            .map(\.output.1)
+
+        // then
+        XCTAssertEqual(output, " - 5, 6, 7, 8")
+    }
 }
