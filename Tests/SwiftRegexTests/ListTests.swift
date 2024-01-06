@@ -79,4 +79,70 @@ final class ListTests: XCTestCase {
         // then
         XCTAssertEqual(output, [1, 2, 3, 4])
     }
+
+    func testDigitListRemainder() {
+        // given
+        let data = "1, 2, 3, 4 - 5, 6, 7, 8"
+        let regex = Regex {
+            List(digitComponent)
+            Capture(OneOrMore(.any))
+        }
+
+        // when
+        let output = data
+            .wholeMatch(of: regex)
+            .map(\.output.1)
+
+        // then
+        XCTAssertEqual(output, " - 5, 6, 7, 8")
+    }
+
+    func testDigitListWithSingleComponentWithCount() {
+        // given
+        let data = "1, 2, 3, 4"
+        let regex = List(digitComponent, count: 2)
+
+        // when
+        let output = data
+            .firstMatch(of: regex)
+            .map(\.output)?
+            .map(String.init)
+
+        // then
+        XCTAssertEqual(output, ["1, ", "2, "])
+    }
+
+    func testDigitListWithComponentBuilderWithCount() {
+        // given
+        let data = "1, 2, 3, 4"
+        let regex = List(count: 2) {
+            digitComponent
+        }
+
+        // when
+        let output = data
+            .firstMatch(of: regex)
+            .map(\.output)?
+            .map(String.init)
+
+        // then
+        XCTAssertEqual(output, ["1, ", "2, "])
+    }
+
+    func testDigitListWithCountRemainder() {
+        // given
+        let data = "1, 2, 3, 4"
+        let regex = Regex {
+            List(digitComponent, count: 2)
+            Capture(OneOrMore(.any))
+        }
+
+        // when
+        let output = data
+            .wholeMatch(of: regex)
+            .map(\.output.1)
+
+        // then
+        XCTAssertEqual(output, "3, 4")
+    }
 }

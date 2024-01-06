@@ -4,6 +4,7 @@ public struct List<Component: RegexComponent>: CustomConsumingRegexComponent {
     public typealias RegexOutput = [Component.RegexOutput]
 
     private let component: Component
+    private let count: Int
 
     private init() {
         fatalError()
@@ -15,11 +16,13 @@ public struct List<Component: RegexComponent>: CustomConsumingRegexComponent {
         in bounds: Range<String.Index>
     ) throws -> (upperBound: String.Index, output: RegexOutput)? {
         let innerInput = input[index..<bounds.upperBound]
-        let repeatRegex = Regex {
-            Repeat(0...) {
-                component
+        let repeatRegex = {
+            if count > 0 {
+                Repeat(component, count: count)
+            } else {
+                Repeat(component, 0...)
             }
-        }
+        }()
         guard let prefix = innerInput.prefixMatch(of: repeatRegex) else {
             return nil
         }
@@ -33,11 +36,19 @@ public struct List<Component: RegexComponent>: CustomConsumingRegexComponent {
 }
 
 public extension List {
-    init(_ component: Component) {
+    init(
+        _ component: Component,
+        count: Int = 0
+    ) {
         self.component = component
+        self.count = count
     }
 
-    init(@RegexComponentBuilder _ builder: () -> Component) {
+    init(
+        count: Int = 0,
+        @RegexComponentBuilder _ builder: () -> Component
+    ) {
         self.component = builder()
+        self.count = count
     }
 }
