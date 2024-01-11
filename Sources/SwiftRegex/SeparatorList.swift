@@ -1,3 +1,4 @@
+import Foundation
 import RegexBuilder
 
 struct SeparatorList: CustomConsumingRegexComponent {
