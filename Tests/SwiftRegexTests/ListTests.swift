@@ -4,33 +4,27 @@ import XCTest
 
 final class ListTests: XCTestCase {
 
-    let digitComponent = Regex {
-        One(.digit)
-        Optionally(", ")
-    }
-
     func testDigitListWithSingleComponent() {
         // given
         let data = "1, 2, 3, 4"
-        let regex = List(digitComponent)
+        let regex = List(One(.digit), separator: ", ")
 
         // when
         let output = data
             .wholeMatch(of: regex)
-            .map(\.output)?
-            .map(String.init)
+            .map(\.output)
 
         // then
-        XCTAssertEqual(output, ["1, ", "2, ", "3, ", "4"])
+        XCTAssertEqual(output, ["1", "2", "3", "4"])
     }
 
     func testDigitListWithSingleComponentTransform() {
         // given
         let data = "1, 2, 3, 4"
-        let regex = Regex {
-            TryCapture(List(digitComponent)) { output in
-                output.compactMap { Int(String($0.first!)) }
-            }
+        let regex = TryCapture(
+            List(One(.digit), separator: ", ")
+        ) { output in
+            output.compactMap { Int($0) }
         }
 
         // when
@@ -46,28 +40,31 @@ final class ListTests: XCTestCase {
         // given
         let data = "1, 2, 3, 4"
         let regex = List {
-            digitComponent
+            One(.digit)
+        } separator: {
+            ", "
         }
 
         // when
         let output = data
             .wholeMatch(of: regex)
-            .map(\.output)?
-            .map(String.init)
-
+            .map(\.output)
+        
         // then
-        XCTAssertEqual(output, ["1, ", "2, ", "3, ", "4"])
+        XCTAssertEqual(output, ["1", "2", "3", "4"])
     }
 
     func testDigitListWithComponentBuilderTransform() {
         // given
         let data = "1, 2, 3, 4"
         let list = List {
-            digitComponent
+            One(.digit)
+        } separator: {
+            ", "
         }
         let regex = Regex {
             TryCapture(list) { output in
-                output.compactMap { Int(String($0.first!)) }
+                output.compactMap { Int($0) }
             }
         }
 
@@ -84,7 +81,7 @@ final class ListTests: XCTestCase {
         // given
         let data = "1, 2, 3, 4 - 5, 6, 7, 8"
         let regex = Regex {
-            List(digitComponent)
+            List(One(.digit), separator: ", ")
             Capture(OneOrMore(.any))
         }
 
@@ -100,40 +97,44 @@ final class ListTests: XCTestCase {
     func testDigitListWithSingleComponentWithCount() {
         // given
         let data = "1, 2, 3, 4"
-        let regex = List(digitComponent, count: 2)
+        let regex = List(
+            One(.digit),
+            count: 2,
+            separator: ", "
+        )
 
         // when
         let output = data
             .firstMatch(of: regex)
-            .map(\.output)?
-            .map(String.init)
+            .map(\.output)
 
         // then
-        XCTAssertEqual(output, ["1, ", "2, "])
+        XCTAssertEqual(output, ["1", "2"])
     }
 
     func testDigitListWithComponentBuilderWithCount() {
         // given
         let data = "1, 2, 3, 4"
         let regex = List(count: 2) {
-            digitComponent
+            One(.digit)
+        } separator: {
+            ", "
         }
 
         // when
         let output = data
             .firstMatch(of: regex)
-            .map(\.output)?
-            .map(String.init)
-
+            .map(\.output)
+        
         // then
-        XCTAssertEqual(output, ["1, ", "2, "])
+        XCTAssertEqual(output, ["1", "2"])
     }
 
     func testDigitListWithCountRemainder() {
         // given
         let data = "1, 2, 3, 4"
         let regex = Regex {
-            List(digitComponent, count: 2)
+            List(One(.digit), count: 2, separator: ", ")
             Capture(OneOrMore(.any))
         }
 
@@ -144,56 +145,5 @@ final class ListTests: XCTestCase {
 
         // then
         XCTAssertEqual(output, "3, 4")
-    }
-
-    func testDigitListWithSeparator() {
-        // given
-        let data = "1, 2, 3, 4"
-        let regex = List(separator: ", ")
-
-        // when
-        let output = data
-            .wholeMatch(of: regex)
-            .map(\.output)
-
-        // then
-        XCTAssertEqual(output, (1...4).map(String.init))
-    }
-
-    func testDigitListWithSeparatorAndLookahead() {
-        // given
-        let data = "1, 2, 3, 4 - 5, 6, 7, 8"
-        let regex = List(
-            separator: ", ",
-            lookahead: " - "
-        )
-
-        // when
-        let output = data
-            .firstMatch(of: regex)
-            .map(\.output)
-
-        // then
-        XCTAssertEqual(output, (1...4).map(String.init))
-    }
-
-    func testDigitListLookaheadRemainder() {
-        // given
-        let data = "1, 2, 3, 4 - 5, 6, 7, 8"
-        let regex = Regex {
-            List(
-                separator: ", ",
-                lookahead: " - "
-            )
-            Capture(OneOrMore(.any))
-        }
-
-        // when
-        let output = data
-            .wholeMatch(of: regex)
-            .map(\.output.1)
-
-        // then
-        XCTAssertEqual(output, " - 5, 6, 7, 8")
     }
 }
